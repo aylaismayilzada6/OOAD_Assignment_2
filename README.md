@@ -21,11 +21,11 @@ The implementation also detects two important exceptions:
 **Responsibility:** store data and support sequential writes/reads.
 - Holds the internal array `int[] buffer`
 - Holds `capacity`
-- Holds global write sequence `WriteCnt`
-- `write(int val)` writes to `buffer[WriteCnt % capacity]` and increments `WriteCnt`
-- `read(long sequence)` returns `buffer[sequence % capacity]`
+- Holds  write sequence `WriteCnt`
+- `write()` writes to `buffer[WriteCnt % capacity]` and increments `WriteCnt`
+- `read()` returns `buffer[sequence % capacity]`
 
-Key idea: the array index is derived from the **sequence number**, not from a moving head/tail pointer.
+Main idea: the array index is derived from the **sequence number**, not from a moving head/tail pointer.
 
 ### `Reader`
 **Responsibility:** read from the ring buffer independently from other readers.
@@ -58,3 +58,5 @@ Key idea: the array index is derived from the **sequence number**, not from a mo
 ---
 
 ## How to Run / Test
+
+The program needs to be run from the main.java 
