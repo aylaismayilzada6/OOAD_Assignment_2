@@ -1,5 +1,3 @@
-package RingBuffer;
-
 
 public class RingBuffer {
     private final int[] buffer;
@@ -36,3 +34,4 @@ public class RingBuffer {
 
 
 }
+
