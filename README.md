@@ -3,17 +3,22 @@
 ## Project Overview
 
 This project implements a **fixed-size ring buffer** in Java with:
-- **one writer**
-- **multiple independent readers** 
+- **Single Writer**
+- **Multiple Readers**
+- Each reader reads **independently** (one reader does not affect others)
+- When the buffer is full, the writer **overwrites the oldest data**
+- Slow readers may **miss items** (they automatically catch up)
 
 Each `Reader` keeps its own read position (`ReadCnt`). The buffer uses a counter (`WriteCnt`) to map each write/read to a physical array index via %:
 - `index = sequence % capacity`
 
-The implementation also detects two important exceptions:
-1. **No new data** → `Reader.read()` returns `null`
-2. **Reader is too slow and data was overwritten** → `Reader.read()` throws `IllegalStateException`
+## How It Works 
+The ring buffer stores values in a fixed array.  
+Instead of tracking “head” and “tail” pointers, we use **sequence numbers**:
 
-
+- Writer increments `WriteCnt` after every write.
+- Each reader increments its own `ReadCnt` after every read.
+- The real array index is always `sequence % capacity`.
 
 ## Responsibilities
 
@@ -25,7 +30,7 @@ The implementation also detects two important exceptions:
 - `write()` writes to `buffer[WriteCnt % capacity]` and increments `WriteCnt`
 - `read()` returns `buffer[sequence % capacity]`
 
-Main idea: the array index is derived from the **sequence number**, not from a moving head/tail pointer.
+
 
 ### `Reader`
 **Responsibility:** read from the ring buffer independently from other readers.
@@ -33,9 +38,13 @@ Main idea: the array index is derived from the **sequence number**, not from a m
 - Has a reference to the shared `RingBuffer`
 - Logic in `read()`:
   1. `currentWrite = buffer.getWriteCnt()`
-  2. If `ReadCnt >= currentWrite` → return `null` (no new data)
-  3. If `ReadCnt < currentWrite - buffer.getCapacity()` → throw `IllegalStateException` (data overwritten)
-  4. Otherwise read `val = buffer.read(ReadCnt)`, then `ReadCnt++`
+  2. `oldestAvailable = max(0, currentWrite - buffer.getCapacity())`
+  3. If the reader is too slow (`ReadCnt < oldestAvailable`) → it **skips missed items** by setting `ReadCnt = oldestAvailable`
+  4. If there is no new data (`ReadCnt >= currentWrite`) → return `null`
+  5. Otherwise:
+     - `val = buffer.read(ReadCnt)`
+     - `ReadCnt++`
+     - return `val`
 
 ### `Main`
 **Responsibility:** demo runner.
@@ -53,7 +62,7 @@ Main idea: the array index is derived from the **sequence number**, not from a m
 ![UML Sequence Diagram write()](images/Sequence_Diagram.jpeg)
 
 ### UML Sequence Diagram — `read()`
-![UML Sequence Diagram read()](images/Seq_Diagram_Reader.jpeg)
+![UML Sequence Diagram read()](images/Reader_Sequence_Update.jpeg)
 
 ---
 
