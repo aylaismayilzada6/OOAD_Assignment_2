@@ -1,5 +1,3 @@
-package RingBuffer;
-
 
 public class Reader{
     private int ReadCnt;
@@ -7,23 +5,25 @@ public class Reader{
 
     public Reader(RingBuffer buffer) {
         this.buffer = buffer;
-        this.ReadCnt = buffer.getWriteCnt();
+        this.ReadCnt = Math.max(0, buffer.getWriteCnt() - buffer.getCapacity());
     }
 
     public Integer read(){
         int currentWrite = buffer.getWriteCnt();
+        int oldValue = Math.max(0, currentWrite-buffer.getCapacity());
 
-        // if no new data 
-        if (ReadCnt >= currentWrite){
-            return null;
-        }
-
+     
         // main case, we need to check what happens when the reader 
         // is too slow 
-        // if so, we need to throw an exception 
+        // If reader is too slow, it misses items. Catch up to oldest available
+        
+        if (ReadCnt < oldValue) {
+            ReadCnt = oldValue;
+        }
 
-        if (ReadCnt < currentWrite - buffer.getCapacity()){
-            throw new IllegalStateException("Data was overwritten because the reader too slow.");
+        // No new data to read
+        if (ReadCnt >= currentWrite) {
+            return null;
         }
 
         int val = buffer.read(ReadCnt); 
@@ -32,3 +32,4 @@ public class Reader{
     }
     
 }
+
